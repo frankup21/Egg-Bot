@@ -25,6 +25,7 @@ class Bot(commands.Bot):
         self.add_command(self.colors)
         self.add_command(self.verify)
         self.add_command(self.fullyverify)
+        self.add_command(self.ask)
 
         self.role_ids = [
             "476625775718694922", #Red
@@ -67,6 +68,12 @@ class Bot(commands.Bot):
 
         self.verified_ids = ["473649456043261953", "473649831328481282"]
 
+    async def on_command_error(self, error, ctx):
+        if isinstance(error, commands.CommandOnCooldown):
+            await self.send_message(ctx.message.channel, ":no_entry_sign: Please wait an hour between posting new questions.")
+        elif isinstance(error, commands.BadArgument):
+            ctx.command.reset_cooldown(ctx)
+
     async def on_ready(self):
         await self.change_presence(game=discord.Game(name=("e!help")))
 
@@ -77,6 +84,33 @@ class Bot(commands.Bot):
         print('Use this link to invite {}:'.format(self.user.name))
         print('https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=8'.format(self.user.id))
         print('--------')
+
+    @commands.cooldown(1, 3600, commands.BucketType.user)
+    @commands.command(pass_context=True)
+    async def ask(self, ctx, *, input: str):
+        if ',' not in input:
+            await self.say(":no_entry_sign: Your command is not in proper format. Make sure your options are comma separated: `e!ask option 1, option 2`")
+            raise commands.BadArgument()
+
+        tokens = input.split(",")
+        if len(tokens) > 2:
+            await self.say(":no_entry_sign: This command only allows two options.")
+            raise commands.BadArgument()
+
+        option1 = tokens[0]
+        option2 = tokens[1]
+
+        if option1 is None or option2 is None or bool(option1.strip()) is False or bool(option2.strip()) is False:
+            await self.say(":no_entry_sign: You must supply two options!")
+            raise commands.BadArgument()
+
+        msg = "🥚 " + option1 + "\n" + "or \n🍆 " + option2
+        embed = discord.Embed(title="Would you rather...", description=msg, colour=0xf7dece)
+        embed.set_author(icon_url=ctx.message.author.avatar_url, name=ctx.message.author.display_name + " asks,")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/372188609425702915/489585830009110549/476089787569405967.png")
+        message = await self.say(embed=embed)
+        await self.add_reaction(message, "🥚")
+        await self.add_reaction(message, "🍆")
 
     @commands.command(pass_context=True)
     async def verify(self, ctx, member: discord.Member=None):
@@ -236,13 +270,31 @@ class Bot(commands.Bot):
 
     async def on_message(self, message):
         await self.process_commands(message)
+        #wordie
+        #if message.channel.id == "474581363442319360":
+        #    messages = []
+        #    async for m in self.logs_from(message.channel, limit=2):
+        #        messages.append(m)
+        #    last_letter = messages[1].content[-1:].lower()
+        #    first_letter = messages[0].content[0].lower()
+        #    if last_letter != first_letter:
+        #        await self.delete_message(message)
+
+        #10000 numbers
         if message.channel.id == "474581363442319360":
+            try:
+                int(message.content)
+            except ValueError:
+                await self.delete_message(message)
+                return
+
             messages = []
             async for m in self.logs_from(message.channel, limit=2):
                 messages.append(m)
-            last_letter = messages[1].content[-1:].lower()
-            first_letter = messages[0].content[0].lower()
-            if last_letter != first_letter:
+            previous_number = messages[1].content
+            posted_number = messages[0].content
+            print(previous_number + " " + posted_number)
+            if (int(previous_number) + 1) != int(posted_number):
                 await self.delete_message(message)
 
 if __name__ == '__main__':
