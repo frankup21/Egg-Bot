@@ -3,6 +3,7 @@ import asyncio
 import platform
 import requests
 import json
+from random import randint
 from datetime import datetime
 from discord.ext.commands import Bot
 from discord.ext import commands
@@ -20,51 +21,50 @@ class Bot(commands.Bot):
         self.remove_command("help")
         self.add_command(self.top)
         self.add_command(self.help)
+        self.add_command(self.mily)
         self.add_command(self.addcolor)
         self.add_command(self.removecolor)
         self.add_command(self.colors)
         self.add_command(self.verify)
         self.add_command(self.fullyverify)
         self.add_command(self.ask)
+        self.add_command(self.status)
+        self.add_command(self.nitro)
+        self.add_command(self.denitro)
 
-        self.role_ids = [
-            "476625775718694922", #Red
-            "479391249170956309", #Mint
-            "476914831744827392", #Blue
-            "475637467370881027", #Pink
-            "480098398461231104", #Orchid
-            "480099403416469525", #Purple
-            "480100032373325824", #Yellow
-            "480100441162645525", #White
-            "480101544981692442", #Orange
-            "480102271133417504", #Lime Green
-            "480103088145825793", #Green
-            "480103452408807424", #Black
-            "480104711748583455", #Cyan
-            "480105715877543936", #Beige
-            "480106440460337155", #Sky Blue
-            "480106946427355136", #Coral
-            "480107033203441675", #Teal
-            "480107825050288131", #Violet
-            "480108741186813952", #Magenta
-            "480108169977266178", #Gold
-            "480109574813253683", #Turquoise
-            "480108741019172864", #Silver
-            "480126003704889349", #Crimson
-            "480127634961858570", #Eggshell
-            "480189683842809865", #Royal Blue
-            "480100032427589632", #Navy
-            "479889427074908161", #Salmon
-            "480106945911586818", #Sea Green
-            "480238460523773953", #Dark Red
-            "480239814768197643", #Slate
-            "480124829085859840" #Dark Green
-        ]
-        self.role_names = [
-            "Red", "Mint", "Blue", "Pink", "Orchid", "Purple", "Yellow", "White", "Orange", "Lime Green",
-            "Green", "Black", "Cyan", "Beige", "Sky Blue", "Coral", "Teal", "Violet", "Magenta", "Gold",
-            "Turquoise", "Silver", "Crimson", "Eggshell", "Royal Blue", "Navy", "Salmon", "Sea Green", "Dark Red", "Slate",
-            "Dark Green"]
+        self.role_ids = {
+            "476625775718694922": "Red",
+            "479391249170956309": "Mint",
+            "476914831744827392": "Blue",
+            "475637467370881027": "Pink",
+            "480098398461231104": "Orchid",
+            "480099403416469525": "Purple",
+            "480100032373325824": "Yellow",
+            "480100441162645525": "White",
+            "480101544981692442": "Orange",
+            "480102271133417504": "Lime Green",
+            "480103088145825793": "Green",
+            "480103452408807424": "Black",
+            "480104711748583455": "Cyan",
+            "480105715877543936": "Beige",
+            "480106440460337155": "Sky Blue",
+            "480106946427355136": "Coral",
+            "480107033203441675": "Teal",
+            "480107825050288131": "Violet",
+            "480108741186813952": "Magenta",
+            "480108169977266178": "Gold",
+            "480109574813253683": "Turquoise",
+            "480108741019172864": "Silver",
+            "480126003704889349": "Crimson",
+            "480127634961858570": "Eggshell",
+            "480189683842809865": "Royal Blue",
+            "480100032427589632": "Navy",
+            "479889427074908161": "Salmon",
+            "480106945911586818": "Sea Green",
+            "480238460523773953": "Dark Red",
+            "480239814768197643": "Slate",
+            "480124829085859840": "Dark Green"
+        }
 
         self.verified_ids = ["473649456043261953", "473649831328481282"]
 
@@ -75,8 +75,6 @@ class Bot(commands.Bot):
             ctx.command.reset_cooldown(ctx)
 
     async def on_ready(self):
-        await self.change_presence(game=discord.Game(name=("e!help")))
-
         print('Logged in as '+self.user.name+' (ID:'+self.user.id+') | Connected to '+str(len(self.servers))+' servers | Connected to '+str(len(set(self.get_all_members())))+' users')
         print('--------')
         print('Current Discord.py Version: {} | Current Python Version: {}'.format(discord.__version__, platform.python_version()))
@@ -84,6 +82,11 @@ class Bot(commands.Bot):
         print('Use this link to invite {}:'.format(self.user.name))
         print('https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions=8'.format(self.user.id))
         print('--------')
+
+    @commands.command(pass_context=True)
+    async def status(self, ctx,  *, stat: str):
+        if str(ctx.message.author.id) == "183457916114698241":
+            await self.change_presence(game=discord.Game(name=(stat)))
 
     @commands.cooldown(1, 3600, commands.BucketType.user)
     @commands.command(pass_context=True)
@@ -131,6 +134,44 @@ class Bot(commands.Bot):
             await self.send_message(ctx.message.channel, ":white_check_mark: User verified!")
 
     @commands.command(pass_context=True)
+    async def nitro(self, ctx, member: discord.Member=None):
+        mod_role = discord.utils.get(ctx.message.server.roles, name="Mod")
+        if mod_role not in ctx.message.author.roles:
+            await self.send_message(ctx.message.channel, ":no_entry_sign: You do not have permission to use this command.")
+            return
+        elif member is None:
+            await self.send_message(ctx.message.channel, ":no_entry_sign: Please tag the user.")
+            return
+        else:
+            for r in member.roles:
+                if r.id == "484369794897018930":
+                    await self.send_message(ctx.message.channel, ":no_entry_sign: That user can already nitro flex!")
+                    return
+            role = discord.utils.get(ctx.message.server.roles, name="Nitro Flexer💰")
+            await self.add_roles(member, role)
+            await self.send_message(ctx.message.channel, ":white_check_mark: " + member.mention + " can now flex in " + self.get_channel("484369598196482049").mention)
+
+    @commands.command(pass_context=True)
+    async def denitro(self, ctx, member: discord.Member=None):
+        mod_role = discord.utils.get(ctx.message.server.roles, name="Mod")
+        if mod_role not in ctx.message.author.roles:
+            await self.send_message(ctx.message.channel, ":no_entry_sign: You do not have permission to use this command.")
+            return
+        elif member is None:
+            await self.send_message(ctx.message.channel, ":no_entry_sign: Please tag the user.")
+            return
+        else:
+            for r in member.roles:
+                if r.id == "484369794897018930":
+                    role = discord.utils.get(ctx.message.server.roles, name="Nitro Flexer💰")
+                    await self.remove_roles(member, role)
+                    await self.send_message(ctx.message.channel, ":white_check_mark: " + member.mention + " can no longer flex in " + self.get_channel("484369598196482049").mention)
+                    return
+
+            await self.send_message(ctx.message.channel, ":no_entry_sign: That user cannot nitro flex!")
+            return
+
+    @commands.command(pass_context=True)
     async def fullyverify(self, ctx, member: discord.Member=None):
         mod_role = discord.utils.get(ctx.message.server.roles, name="Mod")
         if mod_role not in ctx.message.author.roles:
@@ -173,7 +214,7 @@ class Bot(commands.Bot):
             if r.id in self.role_ids:
                 await self.send_message(ctx.message.channel, ":no_entry_sign: Use `e!removecolor` before changing your color!")
                 return
-        if role is None or role.name not in self.role_names:
+        if role is None or role.name not in self.role_ids.values():
             await self.send_message(ctx.message.channel, ":no_entry_sign: That color was not found. Please refer to the color listing below.")
             with open('colors.png', 'rb') as f:
                 await self.send_file(ctx.message.channel, f)
@@ -268,20 +309,25 @@ class Bot(commands.Bot):
         embed.colour = ctx.message.author.colour if hasattr(ctx.message.author, "colour") else discord.Colour.default()
         await self.send_message(ctx.message.channel, embed=embed)
 
+    @commands.command(pass_context=True)
+    async def mily(self, ctx):
+        await self.send_message(ctx.message.channel, "Is the best ever :heart:")
+
     async def on_message(self, message):
         await self.process_commands(message)
+
         #wordie
-        #if message.channel.id == "474581363442319360":
-        #    messages = []
-        #    async for m in self.logs_from(message.channel, limit=2):
-        #        messages.append(m)
-        #    last_letter = messages[1].content[-1:].lower()
-        #    first_letter = messages[0].content[0].lower()
-        #    if last_letter != first_letter:
-        #        await self.delete_message(message)
+        if message.channel.id == "475730288648126494":
+            messages = []
+            async for m in self.logs_from(message.channel, limit=2):
+                messages.append(m)
+            last_letter = messages[1].content[-1:].lower()
+            first_letter = messages[0].content[0].lower()
+            if last_letter != first_letter:
+                await self.delete_message(message)
 
         #10000 numbers
-        if message.channel.id == "474581363442319360":
+        if message.channel.id == "475720467559481354":
             try:
                 int(message.content)
             except ValueError:
@@ -297,6 +343,8 @@ class Bot(commands.Bot):
             if (int(previous_number) + 1) != int(posted_number):
                 await self.delete_message(message)
 
+        if message.channel.id == "489563315480297474" and message.author != self.user:
+            await self.delete_message(message)
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run())
